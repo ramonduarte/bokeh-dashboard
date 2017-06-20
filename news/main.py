@@ -3,7 +3,7 @@ from bokeh.models import Button, ColumnDataSource, HoverTool, FuncTickFormatter
 from bokeh.models.glyphs import VBar
 from bokeh.models.widgets import Slider, Select
 from bokeh.palettes import RdYlBu3
-from bokeh.layouts import layout, widgetbox
+from bokeh.layouts import layout, widgetbox, column, row
 from bokeh.plotting import figure, curdoc, show, output_file
 from bokeh.embed import file_html, components
 from bokeh.resources import CDN
@@ -15,13 +15,13 @@ from datetime import date, timedelta, datetime
 
 # Predefinitions
 plot_width, plot_height = 300, 300
-# excel_file = "D:\Users\Ramon\PycharmProjects\\bokeh-dashboard\dados.xlsx"
-excel_file = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'dados.xlsx')
-list_of_days = [str(i) for i in range(1, 32)]
+# excel_file = "D:\Users\Ramon\PycharmProjects\\bokeh-dashboard\data\dados.xlsx"
+excel_file = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'data', 'dados.xlsx')
+list_of_days = ['{:0>2}'.format(i) for i in range(1, 32)]
 list_of_months = {
-    '1': 'janeiro', '2': 'fevereiro', '3': 'marco', '4': 'abril',
-    '5': 'maio', '6': 'junho', '7': 'julho', '8': 'agosto',
-    '9': 'setembro', '10': 'outubro', '11': 'novembro', '12': 'dezembro',
+    '01': 'janeiro', '02': 'fevereiro', '03': 'marco', '04': 'abril',
+    '05': 'maio', '06': 'junho', '07': 'julho', '08': 'agosto',
+    '09': 'setembro', '10': 'outubro', '11': 'novembro', '12': 'dezembro',
 }
 
 
@@ -94,11 +94,11 @@ x = [d.isoformat()[:10] for d in pd.date_range(start_x, end_x, freq='D')]
 # Interactive controls
 candidato_choice = Select(title='Candidato', options=candidatos, value=u'Todos')
 # ... Start date
-day_start_choice = Select(title='Dia', options=list_of_days, value='1')
+day_start_choice = Select(title='Dia', options=list_of_days, value='01')
 month_start_choice = Select(
     title='Mes',
-    options=list_of_months.keys(),
-    value=str(dts[0].month)
+    options=sorted(list_of_months.keys()),
+    value='{:0>2}'.format(dts[0].month)
 )
 year_start_choice = Select(
     title='Ano',
@@ -109,8 +109,8 @@ year_start_choice = Select(
 day_end_choice = Select(title='Dia', options=list_of_days, value='31')
 month_end_choice = Select(
     title='Mes',
-    options=list_of_months.keys(),
-    value=str(dts[0].month)
+    options=sorted(list_of_months.keys()),
+    value='{:0>2}'.format(dts[-1].month)
 )
 year_end_choice = Select(
     title='Ano',
@@ -138,7 +138,7 @@ source = ColumnDataSource(data=dict(
 
 # Creating and styling a plot comes after all interactive controls have been set
 p = figure(
-    y_range=(0, 250),
+    y_range=(0, 200),
     x_range=x_range,
     toolbar_location=None,
     tools=[hover],
@@ -226,18 +226,42 @@ controls = [
 for c in controls:
     c.on_change('value', lambda attr, old, new: update())
 
-sizing_mode = 'fixed'
+sizing_mode = 'stretch_both'
 
-inputs = widgetbox(*controls, sizing_mode=sizing_mode)
-lay_out = layout([
-    [inputs, p]
-], sizing_mode=sizing_mode)
+candidato_inputs = widgetbox(*controls[0:1], sizing_mode=sizing_mode)
+start_date_inputs = [widgetbox(*controls[k:k+1]) for k in [1, 2, 3]]
+end_date_inputs = [widgetbox(*controls[k:k+1]) for k in [4, 5, 6]]
 
+# start_date_row = row(start_date_inputs, sizing_mode='fixed')
+start_date_row = row(controls[1:4], responsive=True)
+# end_date_row = row(end_date_inputs, sizing_mode='scale_width')
+end_date_row = row(controls[4:], responsive=True)
+
+col_umn = column(
+    p,
+    candidato_inputs,
+    start_date_row,
+    end_date_row,
+    sizing_mode='stretch_both',
+    responsive=True
+)
+
+# lay_out = layout([
+#     [p],
+#     [candidato_inputs],
+#     [start_date_inputs],
+#     [end_date_inputs],
+#     [col_umn],
+# ], sizing_mode=sizing_mode)
 # open a session to keep our local document in sync with server
 # session = push_session(curdoc())
-# update()
-# curdoc().add_root(p)
-curdoc().add_root(lay_out)
-# curdoc().add_periodic_callback(update, 50)
+update()
+curdoc().add_root(p)
+curdoc().add_root(candidato_inputs)
+curdoc().add_root(start_date_row)
+curdoc().add_root(end_date_row)
+# curdoc().add_root(lay_out)
+# curdoc().add_root(col_umn)
+curdoc().add_periodic_callback(update, 50)
 
 # session.loop_until_closed()  # run forever
