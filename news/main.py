@@ -1,3 +1,4 @@
+# coding=utf-8
 from bokeh.layouts import column
 from bokeh.models import Button, ColumnDataSource, HoverTool, FuncTickFormatter
 from bokeh.models.glyphs import VBar
@@ -19,7 +20,7 @@ plot_width, plot_height = 300, 300
 excel_file = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'data', 'dados.xlsx')
 list_of_days = ['{:0>2}'.format(i) for i in range(1, 32)]
 list_of_months = {
-    '01': 'janeiro', '02': 'fevereiro', '03': 'marco', '04': 'abril',
+    '01': 'janeiro', '02': 'fevereiro', '03': 'março', '04': 'abril',
     '05': 'maio', '06': 'junho', '07': 'julho', '08': 'agosto',
     '09': 'setembro', '10': 'outubro', '11': 'novembro', '12': 'dezembro',
 }
@@ -96,7 +97,7 @@ candidato_choice = Select(title='Candidato', options=candidatos, value=u'Todos')
 # ... Start date
 day_start_choice = Select(title='Dia', options=list_of_days, value='01')
 month_start_choice = Select(
-    title='Mes',
+    title='Mês',
     options=sorted(list_of_months.keys()),
     value='{:0>2}'.format(dts[0].month)
 )
@@ -108,7 +109,7 @@ year_start_choice = Select(
 # ... End date
 day_end_choice = Select(title='Dia', options=list_of_days, value='31')
 month_end_choice = Select(
-    title='Mes',
+    title='Mês',
     options=sorted(list_of_months.keys()),
     value='{:0>2}'.format(dts[-1].month)
 )
@@ -120,7 +121,7 @@ year_end_choice = Select(
 
 # Hover tooltips can actually be defined before being instantiated
 hover = HoverTool(tooltips=[
-    ('Noticias', '@top'),
+    ('Notícias', '@top'),
     ('Candidato', '@candidato'),
     ('Data', '@x')
 ])
@@ -145,6 +146,7 @@ p = figure(
     plot_width=plot_width,
     plot_height=plot_height,
     x_axis_type="datetime",
+    title='Notícias por candidato',
 )
 p.vbar(
     x="x",
@@ -246,22 +248,9 @@ col_umn = column(
     responsive=True
 )
 
-# lay_out = layout([
-#     [p],
-#     [candidato_inputs],
-#     [start_date_inputs],
-#     [end_date_inputs],
-#     [col_umn],
-# ], sizing_mode=sizing_mode)
-# open a session to keep our local document in sync with server
-# session = push_session(curdoc())
 update()
 curdoc().add_root(p)
 curdoc().add_root(candidato_inputs)
 curdoc().add_root(start_date_row)
 curdoc().add_root(end_date_row)
-# curdoc().add_root(lay_out)
-# curdoc().add_root(col_umn)
 curdoc().add_periodic_callback(update, 50)
-
-# session.loop_until_closed()  # run forever

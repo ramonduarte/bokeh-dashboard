@@ -1,3 +1,4 @@
+# coding=utf-8
 from bokeh.layouts import column
 from bokeh.models import Button, ColumnDataSource, HoverTool, FuncTickFormatter
 from bokeh.models.glyphs import VBar
@@ -19,7 +20,7 @@ plot_width, plot_height = 300, 300
 excel_file = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'data', 'dados.xlsx')
 list_of_days = ['{:0>2}'.format(i) for i in range(1, 32)]
 list_of_months = {
-    '01': 'janeiro', '02': 'fevereiro', '03': 'marco', '04': 'abril',
+    '01': 'janeiro', '02': 'fevereiro', '03': 'março', '04': 'abril',
     '05': 'maio', '06': 'junho', '07': 'julho', '08': 'agosto',
     '09': 'setembro', '10': 'outubro', '11': 'novembro', '12': 'dezembro',
 }
@@ -98,7 +99,7 @@ newspaper_choice = Select(title='Fonte', options=newspapers, value=u'Todos')
 # ... Start date
 day_start_choice = Select(title='Dia', options=list_of_days, value='01')
 month_start_choice = Select(
-    title='Mes',
+    title='Mês',
     options=sorted(list_of_months.keys()),
     value='{:0>2}'.format(dts[0].month)
 )
@@ -110,7 +111,7 @@ year_start_choice = Select(
 # ... End date
 day_end_choice = Select(title='Dia', options=list_of_days, value='31')
 month_end_choice = Select(
-    title='Mes',
+    title='Mês',
     options=sorted(list_of_months.keys()),
     value='{:0>2}'.format(dts[-1].month)
 )
@@ -120,13 +121,6 @@ year_end_choice = Select(
     value=str(end_year)
 )
 
-# Hover tooltips can actually be defined before being instantiated
-hover = HoverTool(tooltips=[
-    ('Noticias', '@top'),
-    ('Fonte', '@newspaper'),
-    ('Candidato', '@candidato'),
-    ('Data', '@x')
-])
 
 source = ColumnDataSource(data=dict(
     # x=['{:0>2}/{:0>2}/{}'.format(x, 10, 2016) for x in range(1, monthrange(2016, 10)[1] + 1)],
@@ -144,10 +138,10 @@ p = figure(
     y_range=(0, 200),
     x_range=x_range,
     toolbar_location=None,
-    tools=[hover],
     plot_width=plot_width,
     plot_height=plot_height,
     x_axis_type="datetime",
+    title='Notícias por fonte',
 )
 p.vbar(
     x="x",
@@ -155,6 +149,27 @@ p.vbar(
     width=0.5,
     source=source,
 )
+cr = p.circle(
+    x='x', y='top', size=20, source=source,
+    fill_color="grey",
+    hover_fill_color="firebrick",
+    fill_alpha=0.005,
+    hover_alpha=0.3,
+    line_color=None,
+    hover_line_color="white"
+)
+# Hover tooltips can actually be defined before being instantiated
+hover = HoverTool(
+    tooltips=[
+        ('Notícias', '@top'),
+        ('Fonte', '@newspaper'),
+        ('Candidato', '@candidato'),
+        ('Data', '@x'),
+        ],
+    renderers=[cr],
+    mode='hline',
+)
+p.add_tools(hover)
 
 p.xaxis.formatter = FuncTickFormatter(code="""
 var a = new Date('{}');
@@ -163,6 +178,9 @@ a.setUTCDate(a.getUTCDate() + tick);
 return a.getUTCDate() + '/' + (a.getUTCMonth() + 1) + '/' + a.getUTCFullYear();
 """.format(x_range[0]))
 p.xaxis.major_label_orientation = "vertical"
+p.xaxis.axis_label = "Data"
+p.yaxis.axis_label = "Notícias"
+p.title.text_font_size = '20px'
 
 
 def select_news():
@@ -251,9 +269,9 @@ start_date_row = row(controls[1:4], responsive=True)
 end_date_row = row(controls[4:7], responsive=True)
 
 update()
-curdoc().add_root(p)
-curdoc().add_root(row(candidato_inputs, responsive=True))
-curdoc().add_root(row(newspaper_inputs, responsive=True))
+curdoc().add_root(row(p, responsive=True))
+curdoc().add_root(row([candidato_inputs, newspaper_inputs], responsive=True))
+# curdoc().add_root(row(newspaper_inputs, responsive=True))
 curdoc().add_root(start_date_row)
 curdoc().add_root(end_date_row)
 curdoc().add_periodic_callback(update, 50)
